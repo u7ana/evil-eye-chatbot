@@ -1,0 +1,191 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #f7f4ea;
+  --card: #fffdf4;
+  --side: #16381f;
+  --line: #ddd7c2;
+  --text: #1c2a1e;
+  --dim: #6b7a67;
+  --code-bg: #efead8;
+}
+
+.dark {
+  --paper: #0c1a11;
+  --card: #12271a;
+  --side: #091510;
+  --line: #28402e;
+  --text: #e9efe2;
+  --dim: #93a68f;
+  --code-bg: #0e2013;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--paper);
+  color: var(--text);
+  font-family: 'Karla', 'Segoe UI', system-ui, sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94b877;
+}
+
+/* the living eye: slow ambient blink, quicker while thinking */
+.eye-lids {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: eyeblink 6.5s ease-in-out infinite;
+}
+.eye-lids--thinking {
+  animation-duration: 1.4s;
+}
+@keyframes eyeblink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.08);
+  }
+}
+.eye-pupil {
+  transition: transform 90ms linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .eye-lids {
+    animation: none;
+  }
+  .eye-pupil {
+    transition: none;
+  }
+}
+
+/* visible keyboard focus, brand-colored */
+:focus-visible {
+  outline: 2px solid #6b9b4e;
+  outline-offset: 2px;
+}
+
+/* faint paper grain over the chat field */
+.grain {
+  position: relative;
+}
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix type='matrix' values='0 0 0 0 0.10 0 0 0 0 0.18 0 0 0 0 0.10 0 0 0 0.05 0'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+}
+.dark .grain::before {
+  opacity: 0.25;
+}
+
+/* messages rise gently into place */
+@keyframes msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.msg-in {
+  animation: msg-in 0.25s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .msg-in {
+    animation: none;
+  }
+}
+
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line);
+  outline: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #1e5128;
+  box-shadow: 0 0 0 3px rgba(148, 184, 119, 0.35);
+  cursor: pointer;
+}
+input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 999px;
+  background: #1e5128;
+  box-shadow: 0 0 0 3px rgba(148, 184, 119, 0.35);
+  cursor: pointer;
+}
+
+.markdown p {
+  margin: 0 0 8px;
+}
+.markdown p:last-child {
+  margin-bottom: 0;
+}
+.markdown pre {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.markdown code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.85em;
+  background: var(--code-bg);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+.markdown pre code {
+  padding: 0;
+  background: none;
+}
+.markdown ul,
+.markdown ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+.markdown a {
+  color: #6b9b4e;
+  text-decoration: underline;
+}
