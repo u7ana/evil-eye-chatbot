@@ -4,10 +4,11 @@ import re
 from fastapi import HTTPException
 from openai import APIError, OpenAI
 
-CHAT_MODEL = os.getenv("CHAT_MODEL", "gemini-2.5-flash")
-GEMINI_BASE_URL = os.getenv(
-    "GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/"
-)
+# Generic names, not tied to one provider - this project has already swapped
+# the underlying LLM once (Gemini -> Groq) and the code shouldn't need to
+# change again for the next swap, just these env vars.
+CHAT_MODEL = os.getenv("CHAT_MODEL", "openai/gpt-oss-120b")
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
 
 SYSTEM_PROMPT = (
     "You are Evil Eye, a friendly and knowledgeable AI assistant. "
@@ -41,14 +42,14 @@ _client = None
 
 def get_client() -> OpenAI:
     global _client
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("LLM_API_KEY")
     if not api_key:
         raise HTTPException(
             status_code=503,
-            detail="Gemini API key not configured. Add GEMINI_API_KEY to server/.env and restart the backend.",
+            detail="LLM API key not configured. Add LLM_API_KEY to server/.env and restart the backend.",
         )
     if _client is None:
-        _client = OpenAI(api_key=api_key, base_url=GEMINI_BASE_URL)
+        _client = OpenAI(api_key=api_key, base_url=LLM_BASE_URL)
     return _client
 
 
@@ -75,6 +76,6 @@ def get_chat_reply(message: str, history: list[dict]) -> str:
             temperature=0.7,
         )
     except APIError as exc:
-        raise HTTPException(status_code=502, detail=f"Gemini chat request failed: {exc}") from exc
+        raise HTTPException(status_code=502, detail=f"Chat request failed: {exc}") from exc
 
     return response.choices[0].message.content.strip()

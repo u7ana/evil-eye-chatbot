@@ -4,7 +4,7 @@ A bilingual (English/Arabic) AI voice companion. React/Vite frontend, FastAPI ba
 
 ## Stack
 
-- **Chat**: Google Gemini (`gemini-2.5-flash`), free tier, via its OpenAI-compatible endpoint.
+- **Chat**: Groq (`openai/gpt-oss-120b`), free tier, via its OpenAI-compatible endpoint.
 - **Voice out**: English uses the browser's built-in Speech Synthesis (free, client-side). Arabic uses [edge-tts](https://github.com/rany2/edge-tts) on the backend (free, no API key, real male Egyptian-Arabic neural voice) since Windows/browsers typically only ship one, female, Arabic system voice.
 - **Voice in**: local [faster-whisper](https://github.com/SYSTRAN/faster-whisper) on the backend, more accurate than the browser's built-in speech recognition, especially for Arabic.
 
@@ -15,7 +15,7 @@ Backend:
 cd server
 python -m venv venv
 ./venv/Scripts/python.exe -m pip install -r requirements.txt
-cp .env.example .env   # then fill in GEMINI_API_KEY
+cp .env.example .env   # then fill in LLM_API_KEY
 ./venv/Scripts/python.exe -m uvicorn main:app --port 8000
 ```
 
@@ -34,10 +34,10 @@ npm run dev
 
 | Variable | Value |
 |---|---|
-| `GEMINI_API_KEY` | your Gemini API key |
+| `LLM_API_KEY` | your Groq API key |
 | `CORS_ORIGINS` | your deployed Vercel URL, e.g. `https://your-app.vercel.app` |
 | `WHISPER_MODEL` | `base` (fits the free tier's memory; `small` is more accurate but needs more RAM) |
 
-`CHAT_MODEL` and `GEMINI_BASE_URL` have working defaults and don't need to be set unless you want to change them.
+`CHAT_MODEL` and `LLM_BASE_URL` have working defaults and don't need to be set unless you want to change them.
 
 Once the backend is deployed, copy its URL into the frontend's `VITE_API_URL` on Vercel and redeploy the frontend.
