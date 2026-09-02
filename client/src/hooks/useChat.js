@@ -4,6 +4,13 @@ import { sendChatMessage } from '../services/api'
 let idCounter = 0
 const nextId = () => `msg-${Date.now()}-${idCounter++}`
 
+function describeError(err, fallback) {
+  if (err?.code === 'ECONNABORTED') {
+    return "Evil Eye's server is taking longer than usual to wake up. Please try sending that again."
+  }
+  return err?.response?.data?.detail || fallback
+}
+
 const WELCOME_MESSAGE = {
   id: 'welcome',
   role: 'assistant',
@@ -59,10 +66,7 @@ export default function useChat() {
         setMessages((prev) => [...prev, assistantMessage])
         return assistantMessage
       } catch (err) {
-        setError(
-          err?.response?.data?.detail ||
-            'Something went wrong reaching Evil Eye. Please try again.',
-        )
+        setError(describeError(err, 'Something went wrong reaching Evil Eye. Please try again.'))
       } finally {
         setIsLoading(false)
       }
@@ -97,9 +101,7 @@ export default function useChat() {
           ),
         )
       } catch (err) {
-        setError(
-          err?.response?.data?.detail || 'Could not regenerate the response.',
-        )
+        setError(describeError(err, 'Could not regenerate the response.'))
       } finally {
         setIsLoading(false)
       }
