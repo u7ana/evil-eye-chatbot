@@ -25,7 +25,7 @@ ORACLE_PATTERN = re.compile(r"^\s*يا\s+[أا]?يتها\s+العين\s*[:：]")
 ORACLE_DEFAULT_REPLY = "قد يشير ما كتبت الى قصة من اغرب قصص التوراة اليهودية"
 
 ORACLE_RULES = [
-    (("أطاع", "الموت"), "ما كتبت الى قصة عجيبة جداً"),  # a sacrifice, obedient unto death
+    (("أطاع", "الموت"), "قد يشير ما كتبت الى قصة عجيبة جداً"),  # a sacrifice, obedient unto death
     (("اتظلم", "العالم"), "قد يشير ما كتبت الى قصة من اغرب قصص التوراة اليهودية"),  # wronged by those closest to him, saved the world
     (("الشعب", "الخلاص"), "قد يشير ما كتبت الى قصة من اغرب قصص التوراة اليهودية"),  # saved the people from death, gave them the sign of salvation
     (("خبز", "خمر"), "قد يشير ما كتبت الى قصة بدأت هكذا"),  # the only one who offered a sacrifice of bread and wine
