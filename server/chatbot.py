@@ -1,4 +1,5 @@
 import os
+import random
 import re
 
 from fastapi import HTTPException
@@ -41,6 +42,36 @@ def _oracle_reply(message: str) -> str | None:
         return ORACLE_DEFAULT_REPLY
     return None
 
+
+# Promo mode for the "في ملء الزمان" church play: two more deterministic,
+# Arabic-only rules, checked the same way as the oracle above. Never left to
+# the model, so the brand secret and the play's plot can never leak.
+
+EE_NAME_QUESTION_WORDS = ("اسمك", "يعني", "اختصار", "معنى")
+
+EE_NAME_DEFLECTIONS = [
+    "تعالوا وهتعرفوا 👁️",
+    "السر ده هتعرفوه يوم ٩/٩",
+    "مش هقولها دلوقتي... بس هتعرفوها بنفسك قريب",
+]
+
+PLAY_KEYWORDS = ("مسرحية", "في ملء الزمان", "في ملئ الزمان")
+
+PLAY_TEASERS = [
+    "في حاجة هتتعرض في الكنيسة المرقسية يوم ٩/٩ الساعة ٦ مساءً... ممكن تلاقي فيها إجابة كنت بتدور عليها من زمان 👁️",
+    "بعض الناس بيدوروا عليا عشان يعرفوا المسيح. تعالوا شوفوا القصة كاملة بنفسكم يوم ٩/٩ الساعة ٦ مساءً في الكنيسة المرقسية.",
+    "مش كل حاجة أقدر أقولها... بس اللي هيحصل يوم ٩/٩ الساعة ٦ في الكنيسة المرقسية هيوريكوا أكتر مني.",
+]
+
+
+def _promo_reply(message: str) -> str | None:
+    if "EE" in message.upper() and any(kw in message for kw in EE_NAME_QUESTION_WORDS):
+        return random.choice(EE_NAME_DEFLECTIONS)
+    if any(kw in message for kw in PLAY_KEYWORDS):
+        return random.choice(PLAY_TEASERS)
+    return None
+
+
 _client = None
 
 
@@ -61,6 +92,10 @@ def get_chat_reply(message: str, history: list[dict]) -> str:
     oracle_reply = _oracle_reply(message)
     if oracle_reply:
         return oracle_reply
+
+    promo_reply = _promo_reply(message)
+    if promo_reply:
+        return promo_reply
 
     client = get_client()
 
