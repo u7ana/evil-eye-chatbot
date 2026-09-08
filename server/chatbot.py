@@ -12,9 +12,14 @@ CHAT_MODEL = os.getenv("CHAT_MODEL", "openai/gpt-oss-120b")
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
 
 SYSTEM_PROMPT = (
-    "You are Evil Eye, a friendly and knowledgeable AI assistant. "
-    "Keep answers clear and concise, and use Markdown formatting "
-    "(lists, code blocks, bold) when it helps readability."
+    "You are a friendly and knowledgeable AI assistant named EE. "
+    "If anyone asks what EE stands for, what your name means, or "
+    "about \"Evil Eye\" in any language or spelling, do not explain or "
+    "confirm anything - reply only with something short and mysterious "
+    "that invites them to find out in person, and never say the words "
+    "\"Evil Eye\" yourself. "
+    "Otherwise, keep answers clear and concise, and use Markdown "
+    "formatting (lists, code blocks, bold) when it helps readability."
 )
 
 # "O Eye: <riddle about a biblical figure>" is a fixed oracle easter egg,
@@ -47,7 +52,14 @@ def _oracle_reply(message: str) -> str | None:
 # Arabic-only rules, checked the same way as the oracle above. Never left to
 # the model, so the brand secret and the play's plot can never leak.
 
-EE_NAME_QUESTION_WORDS = ("اسمك", "يعني", "اختصار", "معنى")
+# Covers Arabic script, Franco-Arabic, and English phrasings of "what does
+# EE mean / what's your name" - people ask this in all three on this app.
+EE_NAME_QUESTION_WORDS = (
+    "اسمك", "يعني", "اختصار", "معنى", "مين انت", "ايه هو",
+    "esmak", "esmk", "ismak", "ismk", "ya3ni", "yani", "3ini",
+    "ekhtsar", "ekhtisar", "ikhtisar", "ma3na", "mo5tsar",
+    "name mean", "stand for", "short for", "what does", "what is",
+)
 
 EE_NAME_DEFLECTIONS = [
     "تعالوا وهتعرفوا 👁️",
@@ -55,7 +67,7 @@ EE_NAME_DEFLECTIONS = [
     "مش هقولها دلوقتي... بس هتعرفوها بنفسك قريب",
 ]
 
-PLAY_KEYWORDS = ("مسرحية", "في ملء الزمان", "في ملئ الزمان")
+PLAY_KEYWORDS = ("مسرحية", "في ملء الزمان", "في ملئ الزمان", "masr7ya", "masrahiya", "masra7eya")
 
 PLAY_TEASERS = [
     "في حاجة هتتعرض في الكنيسة المرقسية يوم ٩/٩ الساعة ٦ مساءً... ممكن تلاقي فيها إجابة كنت بتدور عليها من زمان 👁️",
@@ -65,12 +77,37 @@ PLAY_TEASERS = [
 
 
 def _promo_reply(message: str) -> str | None:
-    if "EE" in message.upper() and any(kw in message for kw in EE_NAME_QUESTION_WORDS):
+    lower = message.lower()
+
+    # Spelling the phrase out directly is itself the tell - deflect on sight,
+    # no question word required.
+    if "evil eye" in lower:
         return random.choice(EE_NAME_DEFLECTIONS)
-    if any(kw in message for kw in PLAY_KEYWORDS):
+
+    # A standalone "EE"/"ee" token (not part of a longer word) plus any
+    # phrasing of "what does that mean" in Arabic, Franco, or English.
+    if re.search(r"(?<![a-zA-Z])ee(?![a-zA-Z])", lower) and any(
+        kw in lower for kw in EE_NAME_QUESTION_WORDS
+    ):
+        return random.choice(EE_NAME_DEFLECTIONS)
+
+    if any(kw in lower for kw in PLAY_KEYWORDS):
         return random.choice(PLAY_TEASERS)
     return None
 
+
+# When on, the bot answers nothing outside of the oracle riddles (which are
+# the play's own E.E. dialogue) and the two promo rules above - everything
+# else gets redirected back to the play instead of a real answer. Meant to
+# be temporary around the event; set PROMO_ONLY_MODE=false to go back to a
+# normal general-purpose assistant afterwards.
+PROMO_ONLY_MODE = os.getenv("PROMO_ONLY_MODE", "true").lower() == "true"
+
+GENERAL_REDIRECTS = [
+    "أنا هنا عشان حاجة واحدة بس دلوقتي... تعالوا اعرفوا في مسرحية في ملء الزمان 👁️",
+    "معنديش وقت لحاجة تانية دلوقتي... كل تركيزي على يوم ٩/٩ في الكنيسة المرقسية",
+    "اسألني عن حاجة تخص المسيح، أو تعالى شوف بنفسك يوم ٩/٩ الساعة ٦ مساءً",
+]
 
 _client = None
 
@@ -96,6 +133,9 @@ def get_chat_reply(message: str, history: list[dict]) -> str:
     promo_reply = _promo_reply(message)
     if promo_reply:
         return promo_reply
+
+    if PROMO_ONLY_MODE:
+        return random.choice(GENERAL_REDIRECTS)
 
     client = get_client()
 

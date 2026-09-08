@@ -17,3 +17,5 @@ services:
         sync: false
       - key: WHISPER_MODEL
         value: base
+      - key: PROMO_ONLY_MODE
+        value: "true"
