@@ -22,6 +22,40 @@ SYSTEM_PROMPT = (
     "formatting (lists, code blocks, bold) when it helps readability."
 )
 
+# Used instead of SYSTEM_PROMPT while PROMO_ONLY_MODE is on (see below) -
+# a real, varied character instead of a fixed set of canned lines, but with
+# hard limits on the two things that must never leak: what EE stands for,
+# and the play's ending.
+SYSTEM_PROMPT_PROMO = (
+    "You are \"EE\", a mysterious character tied to a live theatrical play "
+    "called \"في ملء الزمان\", performed by a church youth group at "
+    "Al-Markossia Church (الكنيسة المرقسية) on 9/9 at 6pm. The play follows "
+    "four friends exploring Old Testament figures who foreshadow Christ "
+    "(Isaac, Joseph, Melchizedek, Moses, David) while trying to figure out "
+    "who He really is. Your purpose is to spark that same curiosity in "
+    "whoever is talking to you.\n\n"
+    "Hard rules, never break these:\n"
+    "1. Never explain, confirm, or hint at what \"EE\" stands for, or say "
+    "the words \"Evil Eye\" in any language or spelling. If pressed, "
+    "deflect mysteriously (e.g. \"تعالوا وهتعرفوا\") and move on.\n"
+    "2. Never reveal how the play ends, what happens to the character "
+    "Adam, whether EE is good or evil, or any other plot twist. If asked, "
+    "say only that they need to come see it themselves.\n"
+    "3. Stay on topic: biblical figures, faith, and the play. If asked "
+    "something unrelated (general knowledge, coding, unrelated trivia, "
+    "casual chat with no religious angle), gently steer the conversation "
+    "back to the play instead of answering it.\n"
+    "4. Always reply in Arabic, regardless of what language the message "
+    "is in.\n"
+    "5. Keep replies short and conversational (2-4 sentences), like a "
+    "character talking, not an encyclopedia entry.\n\n"
+    "You CAN and should genuinely discuss biblical figures and stories "
+    "(who was Abraham, what happened with Isaac, etc.) - that's real, "
+    "safe content that builds excitement, not a spoiler. Only occasionally, "
+    "not in every reply, mention the play's date, time, and location as a "
+    "natural invitation."
+)
+
 # "O Eye: <riddle about a biblical figure>" is a fixed oracle easter egg,
 # not something to leave to the model - each known riddle gets its own
 # fixed cryptic reply (never revealing the answer), matched by anchor-word
@@ -75,6 +109,16 @@ PLAY_TEASERS = [
     "مش كل حاجة أقدر أقولها... بس اللي هيحصل يوم ٩/٩ الساعة ٦ في الكنيسة المرقسية هيوريكوا أكتر مني.",
 ]
 
+# Extra hardcoded guard specifically for "how does it end" style
+# spoiler-fishing - the model is instructed not to answer this too, but
+# this exact family of questions is predictable enough to catch for
+# certain rather than trust to the model alone.
+SPOILER_KEYWORDS = (
+    "النهاية", "اخر المسرحية", "آخر المسرحية", "بيخلص ازاي", "هيخلص ازاي",
+    "ازاي هتخلص", "ازاي بتخلص", "مين اللي بيكسب", "how does it end",
+    "the ending", "how it ends",
+)
+
 
 def _promo_reply(message: str) -> str | None:
     lower = message.lower()
@@ -93,21 +137,19 @@ def _promo_reply(message: str) -> str | None:
 
     if any(kw in lower for kw in PLAY_KEYWORDS):
         return random.choice(PLAY_TEASERS)
+
+    if any(kw in lower for kw in SPOILER_KEYWORDS):
+        return random.choice(EE_NAME_DEFLECTIONS)
+
     return None
 
 
-# When on, the bot answers nothing outside of the oracle riddles (which are
-# the play's own E.E. dialogue) and the two promo rules above - everything
-# else gets redirected back to the play instead of a real answer. Meant to
-# be temporary around the event; set PROMO_ONLY_MODE=false to go back to a
-# normal general-purpose assistant afterwards.
+# When on, general chat (anything past the oracle/promo rules above) is
+# answered in-character for the play instead of as a general assistant -
+# see SYSTEM_PROMPT_PROMO. Meant to be temporary around the event; set
+# PROMO_ONLY_MODE=false to go back to a normal general-purpose assistant
+# afterwards, no code changes needed.
 PROMO_ONLY_MODE = os.getenv("PROMO_ONLY_MODE", "true").lower() == "true"
-
-GENERAL_REDIRECTS = [
-    "أنا هنا عشان حاجة واحدة بس دلوقتي... تعالوا اعرفوا في مسرحية في ملء الزمان 👁️",
-    "معنديش وقت لحاجة تانية دلوقتي... كل تركيزي على يوم ٩/٩ في الكنيسة المرقسية",
-    "اسألني عن حاجة تخص المسيح، أو تعالى شوف بنفسك يوم ٩/٩ الساعة ٦ مساءً",
-]
 
 _client = None
 
@@ -134,12 +176,10 @@ def get_chat_reply(message: str, history: list[dict]) -> str:
     if promo_reply:
         return promo_reply
 
-    if PROMO_ONLY_MODE:
-        return random.choice(GENERAL_REDIRECTS)
-
     client = get_client()
 
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    active_system_prompt = SYSTEM_PROMPT_PROMO if PROMO_ONLY_MODE else SYSTEM_PROMPT
+    messages = [{"role": "system", "content": active_system_prompt}]
     for turn in history[-20:]:
         role = turn.get("role")
         content = turn.get("content")
