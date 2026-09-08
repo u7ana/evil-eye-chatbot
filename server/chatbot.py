@@ -17,25 +17,29 @@ SYSTEM_PROMPT = (
 )
 
 # "O Eye: <riddle about a biblical figure>" is a fixed oracle easter egg,
-# not something to leave to the model, so it gets the exact same cryptic
-# reply every time rather than a fresh (and possibly answer-revealing) one.
+# not something to leave to the model - each known riddle gets its own
+# fixed cryptic reply (never revealing the answer), matched by anchor-word
+# combos so small spelling/spacing variants of the same riddle still hit.
 ORACLE_PATTERN = re.compile(r"^\s*يا\s+[أا]?يتها\s+العين\s*[:：]")
 
-# The riddle itself also triggers the oracle reply even without the "O Eye:"
-# prefix. Matched by anchor-word combos rather than exact strings, so small
-# spelling/spacing variants of the same riddle still hit.
-ORACLE_RIDDLE_KEYWORDS = [
-    ("ذبيحة", "الموت"),  # a sacrifice, obedient unto death
-    ("اتظلم", "العالم"),  # wronged by those closest to him, saved the world
-    ("سبط يهوذا", "بيت لحم"),  # a king of the tribe of Judah, born in Bethlehem
+ORACLE_DEFAULT_REPLY = "قد يشير ما كتبت الى قصة من اغرب قصص التوراة اليهودية"
+
+ORACLE_RULES = [
+    (("أطاع", "الموت"), "ما كتبت الى قصة عجيبة جداً"),  # a sacrifice, obedient unto death
+    (("اتظلم", "العالم"), "قد يشير ما كتبت الى قصة من اغرب قصص التوراة اليهودية"),  # wronged by those closest to him, saved the world
+    (("الشعب", "الخلاص"), "قد يشير ما كتبت الى قصة من اغرب قصص التوراة اليهودية"),  # saved the people from death, gave them the sign of salvation
+    (("خبز", "خمر"), "قد يشير ما كتبت الى قصة بدأت هكذا"),  # the only one who offered a sacrifice of bread and wine
+    (("سبط يهوذا", "بيت لحم"), "ما كتبت يشير الى قصة ملك من اعظم الملوك عبر التاريخ"),  # a king of the tribe of Judah, born in Bethlehem
 ]
-ORACLE_REPLY = "قد تشير ما كتبت إلى قصة من أغرب القصص في التوراة اليهودية."
 
 
-def _is_oracle_riddle(message: str) -> bool:
+def _oracle_reply(message: str) -> str | None:
+    for keywords, reply in ORACLE_RULES:
+        if all(kw in message for kw in keywords):
+            return reply
     if ORACLE_PATTERN.match(message):
-        return True
-    return any(all(kw in message for kw in combo) for combo in ORACLE_RIDDLE_KEYWORDS)
+        return ORACLE_DEFAULT_REPLY
+    return None
 
 _client = None
 
@@ -54,8 +58,9 @@ def get_client() -> OpenAI:
 
 
 def get_chat_reply(message: str, history: list[dict]) -> str:
-    if _is_oracle_riddle(message):
-        return ORACLE_REPLY
+    oracle_reply = _oracle_reply(message)
+    if oracle_reply:
+        return oracle_reply
 
     client = get_client()
 
