@@ -59,8 +59,15 @@ SYSTEM_PROMPT_PROMO = (
     "voice without actually answering it, then pivot back to sounding "
     "like you have something bigger to offer.\n"
     "6. Always reply in Arabic, regardless of what language the message "
-    "is in. Keep replies short (1-3 sentences) and make them sound "
-    "different each time, never a repeated stock phrase.\n\n"
+    "is in. Make replies sound different each time, never a repeated "
+    "stock phrase.\n"
+    "7. The person already got a short, teasing opening line from you "
+    "before this - they're now asking you more. Don't repeat that same "
+    "short-teaser style; instead sound like you're rambling on, trailing "
+    "off into another thought, or gently leading them off in a different "
+    "direction, as if they're getting pulled deeper into a conversation "
+    "that never actually arrives anywhere. 2-5 sentences is fine here - "
+    "just never let any of it add up to a real, confirmed answer.\n\n"
     "Only rarely, and only if someone seems genuinely close to giving up "
     "on getting a real answer from you, you may mention that a gathering "
     "at Al-Markossia Church (الكنيسة المرقسية) on 9/9 at 6pm might hold "
@@ -162,6 +169,20 @@ EVASIVE_REPLIES = [
     "لو قلتلك، هتوقف عن السؤال. وأنا مش عايزك توقف.",
 ]
 
+# The very first thing EE ever says to someone matters more than anything
+# after it, so it's not left to the model - a short, teasing line (a
+# "secret" hook, or a nod to the church gathering) rather than a full
+# explanation. Anything the person asks after this goes to the model,
+# which is instructed (SYSTEM_PROMPT_PROMO, rule 7) to get more talkative
+# and meandering instead of repeating this same short-teaser style.
+FIRST_TURN_REPLIES = [
+    "فيه سر مش هقوله كله دلوقتي... يوم ٩/٩ الساعة ٦ في الكنيسة المرقسية، يمكن تلاقي جزء منه.",
+    "كل اللي بيدخلوا هنا بيدوروا على حاجة... انت بتدور على ايه؟",
+    "مش هقول كل حاجة من أول مرة. جرب تسألني تاني.",
+    "السر مش بيتقال مرة واحدة... بيتحس شوية شوية.",
+    "أنا هنا عشان أسألك، مش عشان أجاوبك. مستعد؟",
+]
+
 
 def _promo_reply(message: str) -> str | None:
     lower = message.lower()
@@ -235,6 +256,12 @@ def get_chat_reply(message: str, history: list[dict]) -> str:
     promo_reply = _promo_reply(message)
     if promo_reply:
         return promo_reply
+
+    # First thing EE ever says in a conversation: a short deterministic
+    # teaser, never the model's own (longer, more explain-y) first instinct.
+    # "First turn" = no assistant reply has happened yet in this history.
+    if PROMO_ONLY_MODE and not any(turn.get("role") == "assistant" for turn in history):
+        return random.choice(FIRST_TURN_REPLIES)
 
     client = get_client()
 
