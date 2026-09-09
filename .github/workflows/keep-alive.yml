@@ -1,0 +1,23 @@
+name: Keep Render backend awake
+
+# Render's free tier spins the backend down after ~15 minutes idle, and the
+# next request pays a ~50-60s cold-start cost. This pings the lightweight
+# /health endpoint (no LLM call, near-instant) every 10 minutes so the
+# service never goes to sleep during the event.
+#
+# This is meant to be temporary. Once it's no longer needed (event over),
+# either delete this file or disable the workflow from the repo's Actions
+# tab, otherwise it'll keep running indefinitely and eat into Render's free
+# monthly instance-hours for no reason.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend health endpoint
+        run: curl -fsS --max-time 30 https://evil-eye-chatbot.onrender.com/health

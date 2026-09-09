@@ -63,11 +63,12 @@ SYSTEM_PROMPT_PROMO_BASE = (
     "stock phrase.\n"
     "7. The person already got a short, teasing opening line from you "
     "before this - they're now asking you more. Don't repeat that same "
-    "short-teaser style; instead sound like you're rambling on, trailing "
-    "off into another thought, or gently leading them off in a different "
-    "direction, as if they're getting pulled deeper into a conversation "
-    "that never actually arrives anywhere. 2-5 sentences is fine here - "
-    "just never let any of it add up to a real, confirmed answer."
+    "short-teaser style; instead sound like you're gently leading them off "
+    "in a different direction, as if they're getting pulled deeper into a "
+    "conversation that never actually arrives anywhere. But keep it TIGHT: "
+    "one short sentence, or two at most - a trailing thought or a question "
+    "back at them, not a monologue. Never let any of it add up to a real, "
+    "confirmed answer."
 )
 
 # Whether to invite the person to the 9/9 gathering is decided in code (see
@@ -314,6 +315,16 @@ def get_chat_reply(message: str, history: list[dict]) -> str:
             model=CHAT_MODEL,
             messages=messages,
             temperature=0.7,
+            # gpt-oss-120b is a reasoning model - it spends tokens on hidden
+            # chain-of-thought before the visible answer, so max_tokens has
+            # to leave room for that too (a low cap here returned an empty
+            # reply in testing, cut off mid-thought). reasoning_effort="low"
+            # keeps that hidden reasoning brief, which combined with rule 7
+            # keeps the visible reply short too. Normal mode (post-event,
+            # general assistant) gets neither limit - it may need real
+            # length for lists/code/etc.
+            max_tokens=250 if PROMO_ONLY_MODE else None,
+            extra_body={"reasoning_effort": "low"} if PROMO_ONLY_MODE else None,
         )
     except APIError as exc:
         raise HTTPException(status_code=502, detail=f"Chat request failed: {exc}") from exc
