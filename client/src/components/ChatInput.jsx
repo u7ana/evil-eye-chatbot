@@ -103,7 +103,7 @@ export default function ChatInput({ onSend, disabled, voiceReplyEnabled, onToggl
             value={value}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder="Message Evil Eye…"
+            placeholder="اكتب رسالتك لـ EE…"
             className="flex-1 resize-none bg-transparent outline-none text-[15px] text-body placeholder:text-dim py-1.5 max-h-40"
           />
 

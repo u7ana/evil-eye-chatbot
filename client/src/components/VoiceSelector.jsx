@@ -59,7 +59,7 @@ export default function VoiceSelector({ enVoice, previewingId, onPreview }) {
         <HiOutlineSpeakerWave className="text-dim" size={16} />
       </div>
       <p className="text-xs text-dim mb-3">
-        Evil Eye replies with the voice that matches the language you write.
+        EE replies with the voice that matches the language you write.
       </p>
 
       <div className="space-y-2">

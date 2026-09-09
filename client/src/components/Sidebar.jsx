@@ -69,7 +69,7 @@ export default function Sidebar({
             <div className="w-8 h-8 rounded-lg bg-moss flex items-center justify-center">
               <HiOutlineSparkles className="text-cream" size={16} />
             </div>
-            <span className="text-sm font-bold text-cream">Evil Eye Pro</span>
+            <span className="text-sm font-bold text-cream">EE Pro</span>
           </div>
           <p className="text-xs text-cream/60 mb-3">
             Unlimited messages, voice cloning and more.

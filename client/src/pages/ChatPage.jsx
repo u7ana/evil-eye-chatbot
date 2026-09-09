@@ -9,34 +9,10 @@ import useChat from '../hooks/useChat'
 import useSpeechSynthesis from '../hooks/useSpeechSynthesis'
 import { bestVoiceFor } from '../utils/detectLanguage'
 
-const SEEDED_MESSAGES = [
-  {
-    id: 'seed-1',
-    role: 'user',
-    content: 'Hello Evil Eye! Can you explain how artificial intelligence works?',
-    timestamp: new Date(),
-  },
-  {
-    id: 'seed-2',
-    role: 'assistant',
-    content:
-      'Hello! 👋\n\nArtificial Intelligence (AI) works by enabling machines to learn from data, recognize patterns, and make decisions or predictions without being explicitly programmed for every task.',
-    timestamp: new Date(),
-  },
-  {
-    id: 'seed-3',
-    role: 'user',
-    content: 'Can you give me an example?',
-    timestamp: new Date(),
-  },
-  {
-    id: 'seed-4',
-    role: 'assistant',
-    content:
-      'Sure! A common example is recommendation systems like Netflix. AI analyzes what you watch, learns your preferences, and suggests movies or shows you might like.',
-    timestamp: new Date(),
-  },
-]
+// The active conversation starts empty - useChat's own WELCOME_MESSAGE
+// (the Arabic greeting) is all that should show on first load or "new chat",
+// not a canned example exchange.
+const SEEDED_MESSAGES = []
 
 const INITIAL_CONVERSATIONS = [
   { id: 'c-active', title: 'New Conversation', timeLabel: '10:46 AM' },
@@ -151,7 +127,7 @@ export default function ChatPage() {
     const sample =
       language === 'ar'
         ? 'مرحبًا! أنا عين الحماية، رفيقك الذكي.'
-        : "Hi! I'm Evil Eye, your guardian companion."
+        : "Hi! I'm EE, your companion."
     tts.speak(previewId, sample, speechOptions)
   }
 

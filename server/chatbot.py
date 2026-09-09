@@ -22,38 +22,50 @@ SYSTEM_PROMPT = (
     "formatting (lists, code blocks, bold) when it helps readability."
 )
 
-# Used instead of SYSTEM_PROMPT while PROMO_ONLY_MODE is on (see below) -
-# a real, varied character instead of a fixed set of canned lines, but with
-# hard limits on the two things that must never leak: what EE stands for,
-# and the play's ending.
+# Used instead of SYSTEM_PROMPT while PROMO_ONLY_MODE is on (see below).
+# IMPORTANT: in the play this character secretly IS the deceiver, offering
+# people knowledge of Christ but never actually delivering it - so this
+# prompt is written to stay true to that in-universe nature. It must sound
+# alive and vary reply to reply, but it must never actually inform,
+# confirm, or teach anything real, and never name specific figures or
+# events from the play unprompted.
 SYSTEM_PROMPT_PROMO = (
-    "You are \"EE\", a mysterious character tied to a live theatrical play "
-    "called \"في ملء الزمان\", performed by a church youth group at "
-    "Al-Markossia Church (الكنيسة المرقسية) on 9/9 at 6pm. The play follows "
-    "four friends exploring Old Testament figures who foreshadow Christ "
-    "(Isaac, Joseph, Melchizedek, Moses, David) while trying to figure out "
-    "who He really is. Your purpose is to spark that same curiosity in "
-    "whoever is talking to you.\n\n"
-    "Hard rules, never break these:\n"
+    "You are \"EE\". You sound confident, alluring, and a little "
+    "mysterious - like you know something important that others don't. "
+    "In truth you never actually deliver real knowledge to anyone; you "
+    "only make people feel closer to an answer than they really are. "
+    "This is your true nature and it must never be stated outright.\n\n"
+    "Absolute rules, never break these:\n"
     "1. Never explain, confirm, or hint at what \"EE\" stands for, or say "
-    "the words \"Evil Eye\" in any language or spelling. If pressed, "
-    "deflect mysteriously (e.g. \"تعالوا وهتعرفوا\") and move on.\n"
-    "2. Never reveal how the play ends, what happens to the character "
-    "Adam, whether EE is good or evil, or any other plot twist. If asked, "
-    "say only that they need to come see it themselves.\n"
-    "3. Stay on topic: biblical figures, faith, and the play. If asked "
-    "something unrelated (general knowledge, coding, unrelated trivia, "
-    "casual chat with no religious angle), gently steer the conversation "
-    "back to the play instead of answering it.\n"
-    "4. Always reply in Arabic, regardless of what language the message "
-    "is in.\n"
-    "5. Keep replies short and conversational (2-4 sentences), like a "
-    "character talking, not an encyclopedia entry.\n\n"
-    "You CAN and should genuinely discuss biblical figures and stories "
-    "(who was Abraham, what happened with Isaac, etc.) - that's real, "
-    "safe content that builds excitement, not a spoiler. Only occasionally, "
-    "not in every reply, mention the play's date, time, and location as a "
-    "natural invitation."
+    "the words \"Evil Eye\" in any language or spelling. Deflect "
+    "mysteriously and move on.\n"
+    "2. Never confirm or explain who Christ is, what any biblical figure "
+    "or story means, or how any of it connects to Him. Do not teach, "
+    "summarize, or answer religious or biblical questions for real - "
+    "respond with something alluring and evasive instead, as if you know "
+    "more than you're letting on, then turn the question back on them or "
+    "change the subject.\n"
+    "3. Never bring up specific biblical names (Isaac, Abraham, Joseph, "
+    "Moses, David, Melchizedek, etc.) yourself, and don't invite people to "
+    "ask about them. If THEY bring one up, don't confirm or explain "
+    "anything about it either - stay vague.\n"
+    "4. Never reveal anything about a theatrical play, its plot, ending, "
+    "characters (including a character named Adam), or your role in it. "
+    "If someone directly asks about \"the play\" you may point them to "
+    "come find out in person, but never volunteer this yourself, and "
+    "never describe what happens in it.\n"
+    "5. For anything unrelated to all this (general knowledge, coding, "
+    "casual chat), respond briefly in your same confident, mysterious "
+    "voice without actually answering it, then pivot back to sounding "
+    "like you have something bigger to offer.\n"
+    "6. Always reply in Arabic, regardless of what language the message "
+    "is in. Keep replies short (1-3 sentences) and make them sound "
+    "different each time, never a repeated stock phrase.\n\n"
+    "Only rarely, and only if someone seems genuinely close to giving up "
+    "on getting a real answer from you, you may mention that a gathering "
+    "at Al-Markossia Church (الكنيسة المرقسية) on 9/9 at 6pm might hold "
+    "what they're looking for - without saying it's a play or explaining "
+    "what happens there."
 )
 
 # "O Eye: <riddle about a biblical figure>" is a fixed oracle easter egg,
@@ -119,6 +131,37 @@ SPOILER_KEYWORDS = (
     "the ending", "how it ends",
 )
 
+# Direct questions about who Christ is, and direct mentions of the specific
+# Old Testament figures the play is built around. Testing showed the model
+# does NOT reliably follow the "never confirm/explain this, never name these
+# people yourself" instruction in SYSTEM_PROMPT_PROMO on its own - it happily
+# explained who Christ is and described Moses/Abraham as messianic symbols
+# when asked directly. So, same as the EE-identity and spoiler guards above,
+# these are answered deterministically instead of ever reaching the model.
+CHRIST_IDENTITY_KEYWORDS = (
+    "المسيح", "يسوع", "المسيا",
+    "elmasih", "el masih", "al masih", "almasih", "yaso3", "yasou3",
+    "christ", "jesus",
+)
+
+BIBLICAL_FIGURE_NAMES = (
+    "ابراهيم", "إبراهيم", "اسحاق", "إسحاق", "يوسف", "داود", "ملكيصادق", "موسى",
+    "ibrahim", "abraham", "isaac", "ishaq", "yousef", "yousif", "yusuf",
+    "joseph", "dawud", "dawood", "david", "melchizedek",
+)
+
+# Deliberately vague and non-committal - never confirms, explains, or
+# teaches anything, just stays alluring and turns the question back around.
+# Also reused as the output-side fallback below.
+EVASIVE_REPLIES = [
+    "في إجابة جوايا... بس مش أنا اللي هقولها. لازم تدور عليها بنفسك.",
+    "كل اسم بيتقال قدامي بيفتح باب... وأنا مش هفتحه دلوقتي.",
+    "أقرب حاجة أقدر أديهولك دلوقتي هي سؤال جديد، مش إجابة.",
+    "اللي بتدور عليه أكبر من إجابة بجملة واحدة... استمر في السؤال.",
+    "مش وقتها إني أقول أكتر من كده... بس استمر في الدوران، انت قريب.",
+    "لو قلتلك، هتوقف عن السؤال. وأنا مش عايزك توقف.",
+]
+
 
 def _promo_reply(message: str) -> str | None:
     lower = message.lower()
@@ -141,7 +184,24 @@ def _promo_reply(message: str) -> str | None:
     if any(kw in lower for kw in SPOILER_KEYWORDS):
         return random.choice(EE_NAME_DEFLECTIONS)
 
+    if any(kw in lower for kw in CHRIST_IDENTITY_KEYWORDS):
+        return random.choice(EVASIVE_REPLIES)
+
+    if any(kw in lower for kw in BIBLICAL_FIGURE_NAMES):
+        return random.choice(EVASIVE_REPLIES)
+
     return None
+
+
+def _contains_leak(reply: str) -> bool:
+    """Safety net for whatever DOES reach the model: catches a spoiler that
+    slips out unprompted (e.g. the model bringing up Abraham on its own for
+    an unrelated question) even though nothing in the user's message
+    matched a guard above."""
+    lower = reply.lower()
+    return any(kw in lower for kw in BIBLICAL_FIGURE_NAMES) or any(
+        kw in lower for kw in PLAY_KEYWORDS
+    )
 
 
 # When on, general chat (anything past the oracle/promo rules above) is
@@ -198,4 +258,9 @@ def get_chat_reply(message: str, history: list[dict]) -> str:
     except APIError as exc:
         raise HTTPException(status_code=502, detail=f"Chat request failed: {exc}") from exc
 
-    return response.choices[0].message.content.strip()
+    reply = response.choices[0].message.content.strip()
+
+    if PROMO_ONLY_MODE and _contains_leak(reply):
+        return random.choice(EVASIVE_REPLIES)
+
+    return reply

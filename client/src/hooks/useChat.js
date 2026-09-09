@@ -6,7 +6,7 @@ const nextId = () => `msg-${Date.now()}-${idCounter++}`
 
 function describeError(err, fallback) {
   if (err?.code === 'ECONNABORTED') {
-    return "Evil Eye's server is taking longer than usual to wake up. Please try sending that again."
+    return 'السيرفر بياخد وقت أطول من المعتاد عشان يصحى... حاول تبعت رسالتك تاني.'
   }
   return err?.response?.data?.detail || fallback
 }
@@ -14,7 +14,7 @@ function describeError(err, fallback) {
 const WELCOME_MESSAGE = {
   id: 'welcome',
   role: 'assistant',
-  content: "Hello! 👋\n\nI'm Evil Eye, your AI assistant. Ask me anything, and I can speak my answers back to you in the voice you choose.",
+  content: 'أنا اللي أقدر أديك كل المعرفة اللي انت عايزها وكل معلومة تتمناها',
   timestamp: new Date(),
 }
 
@@ -66,7 +66,7 @@ export default function useChat() {
         setMessages((prev) => [...prev, assistantMessage])
         return assistantMessage
       } catch (err) {
-        setError(describeError(err, 'Something went wrong reaching Evil Eye. Please try again.'))
+        setError(describeError(err, 'حصلت مشكلة في الوصول لـ EE. حاول تاني.'))
       } finally {
         setIsLoading(false)
       }

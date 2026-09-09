@@ -29,7 +29,7 @@ export default function EyeLogo({ size = 40, className = '' }) {
       className={`inline-flex items-center justify-center ${className}`}
       style={{ width: size, height: size }}
     >
-      <svg width={size} height={size} viewBox="0 0 512 512" aria-label="Evil Eye logo">
+      <svg width={size} height={size} viewBox="0 0 512 512" aria-label="EE logo">
         <Rings />
       </svg>
     </span>
@@ -80,7 +80,7 @@ export function LiveEye({ size = 40, thinking = false, className = '' }) {
       className={`inline-flex items-center justify-center ${className}`}
       style={{ width: size, height: size }}
     >
-      <svg width={size} height={size} viewBox="0 0 512 512" aria-label="Evil Eye logo">
+      <svg width={size} height={size} viewBox="0 0 512 512" aria-label="EE logo">
         <Rings
           pupilRef={pupilRef}
           lidsClass={`eye-lids${thinking ? ' eye-lids--thinking' : ''}`}

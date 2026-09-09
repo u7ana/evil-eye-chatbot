@@ -33,14 +33,14 @@ function RoadDivider({ label }) {
 }
 
 const STARTERS = [
-  { text: 'Explain how AI works — simply', lang: 'en' },
-  { text: 'Help me plan a productive day', lang: 'en' },
-  { text: 'اشرح لي الذكاء الاصطناعي ببساطة', lang: 'ar' },
-  { text: 'اقترح لي خطة ليوم منتج', lang: 'ar' },
+  { text: 'مين انت؟', lang: 'ar' },
+  { text: 'احكيلي سر محدش يعرفه', lang: 'ar' },
+  { text: 'ليه اسمك EE؟', lang: 'ar' },
+  { text: 'تقدر تساعدني ألاقي إجابة كنت بدور عليها؟', lang: 'ar' },
 ]
 
-/* First-visit moment: two English and two Arabic starters, so the first
-   click already demonstrates the bilingual voice switching. */
+/* First-visit moment: curiosity-driven Arabic openers that put EE's
+   mysterious, evasive persona on display right away. */
 function Starters({ onStarter }) {
   return (
     <div className="mt-2">
