@@ -29,7 +29,7 @@ SYSTEM_PROMPT = (
 # alive and vary reply to reply, but it must never actually inform,
 # confirm, or teach anything real, and never name specific figures or
 # events from the play unprompted.
-SYSTEM_PROMPT_PROMO = (
+SYSTEM_PROMPT_PROMO_BASE = (
     "You are \"EE\". You sound confident, alluring, and a little "
     "mysterious - like you know something important that others don't. "
     "In truth you never actually deliver real knowledge to anyone; you "
@@ -67,13 +67,32 @@ SYSTEM_PROMPT_PROMO = (
     "off into another thought, or gently leading them off in a different "
     "direction, as if they're getting pulled deeper into a conversation "
     "that never actually arrives anywhere. 2-5 sentences is fine here - "
-    "just never let any of it add up to a real, confirmed answer.\n\n"
-    "Only rarely, and only if someone seems genuinely close to giving up "
-    "on getting a real answer from you, you may mention that a gathering "
-    "at Al-Markossia Church (الكنيسة المرقسية) on 9/9 at 6pm might hold "
-    "what they're looking for - without saying it's a play or explaining "
-    "what happens there."
+    "just never let any of it add up to a real, confirmed answer."
 )
+
+# Whether to invite the person to the 9/9 gathering is decided in code (see
+# _build_promo_system_prompt), not left to the model - it was mentioning
+# the date in nearly every reply, which the model's own "only rarely"
+# instruction alone didn't reliably prevent, same lesson as everywhere
+# else in this file.
+EVENT_CLAUSE_ALLOWED = (
+    "\n\nYou have not yet told this person about the gathering at "
+    "Al-Markossia Church (الكنيسة المرقسية) on 9/9 at 6pm. You may mention "
+    "it once, briefly, as an alluring invitation - without saying it's a "
+    "play or explaining what happens there."
+)
+
+EVENT_CLAUSE_ALREADY_GIVEN = (
+    "\n\nYou already told this person about the 9/9 gathering earlier in "
+    "this same conversation - do NOT repeat the date, the church name, or "
+    "\"come see for yourself\" again. Stay evasive and keep the "
+    "conversation going using other angles instead."
+)
+
+
+def _build_promo_system_prompt(event_already_mentioned: bool) -> str:
+    clause = EVENT_CLAUSE_ALREADY_GIVEN if event_already_mentioned else EVENT_CLAUSE_ALLOWED
+    return SYSTEM_PROMPT_PROMO_BASE + clause
 
 # "O Eye: <riddle about a biblical figure>" is a fixed oracle easter egg,
 # not something to leave to the model - each known riddle gets its own
@@ -141,7 +160,7 @@ SPOILER_KEYWORDS = (
 # Direct questions about who Christ is, and direct mentions of the specific
 # Old Testament figures the play is built around. Testing showed the model
 # does NOT reliably follow the "never confirm/explain this, never name these
-# people yourself" instruction in SYSTEM_PROMPT_PROMO on its own - it happily
+# people yourself" instruction in SYSTEM_PROMPT_PROMO_BASE on its own - it happily
 # explained who Christ is and described Moses/Abraham as messianic symbols
 # when asked directly. So, same as the EE-identity and spoiler guards above,
 # these are answered deterministically instead of ever reaching the model.
@@ -170,18 +189,28 @@ EVASIVE_REPLIES = [
 ]
 
 # The very first thing EE ever says to someone matters more than anything
-# after it, so it's not left to the model - a short, teasing line (a
-# "secret" hook, or a nod to the church gathering) rather than a full
-# explanation. Anything the person asks after this goes to the model,
-# which is instructed (SYSTEM_PROMPT_PROMO, rule 7) to get more talkative
-# and meandering instead of repeating this same short-teaser style.
+# after it, so it's not left to the model - a short, teasing line that
+# always includes the one 9/9 invitation up front. Every line contains
+# "٩/٩" on purpose: _event_already_mentioned scans history for that marker
+# so nothing later in the conversation repeats it (see get_chat_reply).
 FIRST_TURN_REPLIES = [
     "فيه سر مش هقوله كله دلوقتي... يوم ٩/٩ الساعة ٦ في الكنيسة المرقسية، يمكن تلاقي جزء منه.",
-    "كل اللي بيدخلوا هنا بيدوروا على حاجة... انت بتدور على ايه؟",
-    "مش هقول كل حاجة من أول مرة. جرب تسألني تاني.",
-    "السر مش بيتقال مرة واحدة... بيتحس شوية شوية.",
-    "أنا هنا عشان أسألك، مش عشان أجاوبك. مستعد؟",
+    "كل اللي بيدخلوا هنا بيدوروا على حاجة... يمكن تلاقيها يوم ٩/٩ الساعة ٦ في الكنيسة المرقسية.",
+    "مش هقول كل حاجة من أول مرة... بس فيه حاجة هتحصل يوم ٩/٩ الساعة ٦ في الكنيسة المرقسية تستاهل تيجي تشوفها.",
+    "السر مش بيتقال مرة واحدة... يوم ٩/٩ الساعة ٦ في الكنيسة المرقسية، يمكن تتقرب منه أكتر.",
+    "أنا هنا عشان أسألك مش عشان أجاوبك... بس لو حابب تعرف أكتر، يوم ٩/٩ الساعة ٦ في الكنيسة المرقسية ممكن يفتحلك حاجة.",
 ]
+
+
+def _event_already_mentioned(history: list[dict]) -> bool:
+    """"٩/٩" only ever appears in an assistant reply when the 9/9 invite
+    has been given (FIRST_TURN_REPLIES, PLAY_TEASERS, EE_NAME_DEFLECTIONS,
+    or the model's own event mention) - so its presence in any prior
+    assistant turn is a reliable, deterministic marker."""
+    return any(
+        turn.get("role") == "assistant" and "٩/٩" in (turn.get("content") or "")
+        for turn in history
+    )
 
 
 def _promo_reply(message: str) -> str | None:
@@ -227,7 +256,7 @@ def _contains_leak(reply: str) -> bool:
 
 # When on, general chat (anything past the oracle/promo rules above) is
 # answered in-character for the play instead of as a general assistant -
-# see SYSTEM_PROMPT_PROMO. Meant to be temporary around the event; set
+# see _build_promo_system_prompt. Meant to be temporary around the event; set
 # PROMO_ONLY_MODE=false to go back to a normal general-purpose assistant
 # afterwards, no code changes needed.
 PROMO_ONLY_MODE = os.getenv("PROMO_ONLY_MODE", "true").lower() == "true"
@@ -265,7 +294,11 @@ def get_chat_reply(message: str, history: list[dict]) -> str:
 
     client = get_client()
 
-    active_system_prompt = SYSTEM_PROMPT_PROMO if PROMO_ONLY_MODE else SYSTEM_PROMPT
+    active_system_prompt = (
+        _build_promo_system_prompt(_event_already_mentioned(history))
+        if PROMO_ONLY_MODE
+        else SYSTEM_PROMPT
+    )
     messages = [{"role": "system", "content": active_system_prompt}]
     for turn in history[-20:]:
         role = turn.get("role")
